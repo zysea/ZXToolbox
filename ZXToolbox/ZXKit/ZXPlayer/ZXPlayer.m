@@ -471,7 +471,7 @@
             [self playAtRate];
         }
         //
-        if (self.playerItem.isPlaybackBufferEmpty) {
+        if (self.playerItem.isPlaybackBufferEmpty && !self.isPlaying) {
             self.status = ZXPlaybackStatusBuffering;
         }
     }
