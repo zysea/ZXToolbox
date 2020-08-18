@@ -2,7 +2,7 @@
 // UIDevice+ZXToolbox.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <mach/machine.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -34,6 +35,27 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// The  model name of device, e.g. "iPhone 11 Pro", supported iPhone/iPad/iPod touch series.
 @property (nonatomic, readonly, nullable) NSString *modelName;
+
+/// The Unique Device Identifier with UUIDString store in Keychain
+@property (nonatomic, readonly) NSString *UDIDString;
+
+/// The size of the file system in bytes.
+@property (nonatomic, readonly) int64_t fileSystemSize;
+
+/// The amount of free space on the file system in bytes.
+@property (nonatomic, readonly) int64_t fileSystemFreeSize;
+
+/// The amount of used space on the file system in bytes.
+@property (nonatomic, readonly) int64_t fileSystemUsedSize;
+
+/// The CPU bits, the value is 32/64 etc.
+@property (nonatomic, readonly) int cpuBits;
+
+/// The CPU type, the value is CPU_TYPE_ARM / CPU_TYPE_ARM64 etc.
+@property (nonatomic, readonly) int cpuType;
+
+/// Proximity state observer block
+@property (nonatomic, copy) void (^proximityStateDidChange)(BOOL proximityState);
 
 @end
 

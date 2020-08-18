@@ -2,7 +2,7 @@
 // ZXLocationManager.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL alwaysAuthorization;
 
 /// Invoked when new locations are available.
-@property (nonatomic, copy, nullable) void (^didUpdateLocation)(CLLocation * _Nonnull location, CLPlacemark * _Nullable placemark);
+@property (nonatomic, copy, nullable) void (^didUpdateLocation)(CLLocation *location, CLPlacemark *_Nullable placemark);
 
 /**
  Request a single location update.

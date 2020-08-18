@@ -2,7 +2,7 @@
 // ZXDownloadTask.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #import "ZXDownloadTask.h"
 #import "ZXDownloader.h"
 #import "ZXCommonCrypto.h"
+#import "ZXKVObserver.h"
 #import <UIKit/UIKit.h>
 
 /// ZXDownloadObserver
@@ -47,6 +48,9 @@
 @end
 
 @interface ZXDownloadTask ()
+
+@property (nonatomic, strong) NSURLSessionTask *task;
+
 @property (nonatomic, strong) NSMutableArray *observers;
 
 @property (nonatomic, strong) NSString *cacheFilePath;
@@ -57,11 +61,19 @@
 @property (nonatomic, assign) int64_t totalBytesWritten;
 @property (nonatomic, assign) int64_t totalBytesExpectedToWrite;
 
+@property (nonatomic, assign) NSURLSessionTaskState state;
+
+@property (nonatomic, strong) ZXKVObserver *taskStateObserver;
+
 @end
 
 @implementation ZXDownloadTask
 
-- (instancetype)initWithURL:(NSURL *)URL path:(NSString *)path {
+- (instancetype)initWithURL:(NSURL *)URL path:(NSString *)path session:(NSURLSession *)session {
+    return [self initWithURL:URL path:path session:session resumeBroken:YES];
+}
+
+- (instancetype)initWithURL:(NSURL *)URL path:(NSString *)path session:(NSURLSession *)session resumeBroken:(BOOL)resumeBroken {
     self = [super init];
     if (self) {
         //
@@ -74,30 +86,30 @@
             [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
         }
         //
-        _observers = [[NSMutableArray alloc] init];
-        _taskIdentifier = URL.taskIdentifier;
-        _finalFilePath = [path stringByAppendingPathComponent:[URL lastPathComponent]];
-        _cacheFilePath = [path stringByAppendingPathComponent:_taskIdentifier];
-        _totalBytesWritten = [self fileSizeAtPath:_cacheFilePath];
-        _totalBytesExpectedToWrite = 0;
+        if (URL) {
+            _URL = [URL copy];
+            _taskIdentifier = _URL.taskIdentifier;
+            _cacheFilePath = [path stringByAppendingPathComponent:_taskIdentifier];
+            _finalFilePath = [path stringByAppendingPathComponent:[_URL lastPathComponent]];
+            _totalBytesWritten = [self fileSizeAtPath:_cacheFilePath];
+            _totalBytesExpectedToWrite = 0;
+            _observers = [[NSMutableArray alloc] init];
+            NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
+            if (resumeBroken && _totalBytesWritten > 0) {
+                // Range
+                // bytes=x-y ==  x byte ~ y byte
+                // bytes=x-  ==  x byte ~ end
+                // bytes=-y  ==  head ~ y byte
+                [request setValue:[NSString stringWithFormat:@"bytes=%lld-", _totalBytesWritten] forHTTPHeaderField:@"Range"];
+            }
+            // State
+            _state = NSURLSessionTaskStateSuspended;
+            _task = [session dataTaskWithRequest:[request copy]];
+        }
+        //
+        _taskStateObserver = [[ZXKVObserver alloc] init];
     }
     return self;
-}
-
-- (void)setTask:(NSURLSessionTask *)task {
-    _task = task;
-    //
-    __weak typeof(self) weakSelf = self;
-    if ([_task isKindOfClass:NSURLSessionDownloadTask.class]) {
-        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-            if (weakSelf.state == NSURLSessionTaskStateRunning) {
-                [weakSelf suspend];
-                [weakSelf resume];
-            }
-        }];
-    } else {
-        [[NSNotificationCenter defaultCenter] removeObserver:self];
-    }
 }
 
 #pragma mark Observer
@@ -109,12 +121,12 @@
     taskObserver.observer = observer;
     taskObserver.state = state;
     taskObserver.progress = progress;
-    [self.observers addObject:taskObserver];
+    [_observers addObject:taskObserver];
 }
 
 - (void)removeObserver:(id)observer {
     NSMutableArray *array = [[NSMutableArray alloc] init];
-    for (ZXDownloadObserver *obj in self.observers) {
+    for (ZXDownloadObserver *obj in _observers) {
         if (obj.observer == observer) {
             [array addObject:obj];
         }
@@ -125,7 +137,7 @@
 #pragma mark Files
 
 - (NSString *)filePath {
-    if (self.state == NSURLSessionTaskStateCompleted) {
+    if (_state == NSURLSessionTaskStateCompleted) {
         return _finalFilePath;
     }
     return _cacheFilePath;
@@ -143,53 +155,58 @@
 
 #pragma mark State
 
-- (NSURLSessionTaskState)state {
-    return _task.state;
-}
-
 - (void)cancel {
-    if ([_task isKindOfClass:NSURLSessionDownloadTask.class]) {
-        __weak typeof(self) weakSelf = self;
-        [((NSURLSessionDownloadTask *)_task) cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
-            [weakSelf writeResumeData:resumeData];
-        }];
-    } else {
-        [self.task cancel];
+    if (_state == NSURLSessionTaskStateRunning ||
+        _state == NSURLSessionTaskStateSuspended) {
+        [_task cancel];
     }
 }
 
 - (void)suspend {
-    [self.task suspend];
-    [self setState:NSURLSessionTaskStateSuspended withError:nil];
+    if (_state == NSURLSessionTaskStateRunning) {
+        [_task suspend];
+        [self setState:NSURLSessionTaskStateSuspended withError:nil];
+    }
 }
 
 - (void)resume {
-    [self.task resume];
-    [self setState:NSURLSessionTaskStateRunning withError:nil];
+    BOOL isDir = NO;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:_finalFilePath isDirectory:&isDir] && !isDir) {
+        id userInfo = @{NSLocalizedFailureReasonErrorKey:@"Could not perform an operation because the destination file already exists."};
+        NSError *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileWriteFileExistsError userInfo:userInfo];
+        [self setState:NSURLSessionTaskStateCompleted withError:error];
+    } else if (_state == NSURLSessionTaskStateSuspended) {
+        [_task resume];
+        [self setState:NSURLSessionTaskStateRunning withError:nil];
+    } else if (_state == NSURLSessionTaskStateCompleted) {
+        [self setState:NSURLSessionTaskStateCompleted withError:nil];
+    }
+}
+
+- (void)setState:(NSURLSessionTaskState)state {
+    [self willChangeValueForKey:@"state"];
+    _state = state;
+    [self didChangeValueForKey:@"state"];
 }
 
 - (void)setState:(NSURLSessionTaskState)state withError:(NSError *)error {
-    NSString *path = state == NSURLSessionTaskStateCompleted ? self.finalFilePath : nil;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        for (ZXDownloadObserver *observer in self.observers) {
-            if (observer.observer && observer.state) {
-                observer.state(state, path, error);
-            }
+    if (state == NSURLSessionTaskStateCompleted) {
+        if ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorCancelled) {
+            state = NSURLSessionTaskStateCanceling;
+            error = nil;
         }
-    });
-}
-
-- (BOOL)writeResumeData:(NSData *)resumeData {
-    if (_cacheFilePath) {
-        [[NSFileManager defaultManager] removeItemAtPath:_cacheFilePath error:nil];
-    } else {
-        NSLog(@"The cacheFilePath is not be nil");
-        return false;
     }
-    if (resumeData) {
-        [resumeData writeToFile:_cacheFilePath atomically:YES];
+    //
+    self.state = state;
+    //
+    NSString *path = self.filePath;
+    for (ZXDownloadObserver *observer in self.observers) {
+        if (observer.observer && observer.state) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                observer.state(state, path, error);
+            });
+        }
     }
-    return true;
 }
 
 #pragma mark Progress
@@ -216,6 +233,9 @@
     float progress = 0.f;
     if (_totalBytesExpectedToWrite > 0) {
         progress = (float)_totalBytesWritten / _totalBytesExpectedToWrite;
+        if (progress > 1.0) {
+            progress = 1.0;
+        }
     }
     //
     __weak typeof(self) weakSelf = self;
@@ -254,20 +274,14 @@
 */
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error
 {
-    if ([task isKindOfClass:NSURLSessionDataTask.class]) {
-        [self closeOutputStream];
-        if (error == nil && task.state == NSURLSessionTaskStateCompleted) {
-            [[NSFileManager defaultManager] removeItemAtPath:_finalFilePath error:nil];
-            [[NSFileManager defaultManager] moveItemAtPath:_cacheFilePath
-                                                    toPath:_finalFilePath
-                                                     error:&error];
-        }
-        [self setState:task.state withError:error];
-    } else if (error) {
-        NSData *resumeData = error.userInfo[NSURLSessionDownloadTaskResumeData];
-        [self writeResumeData:resumeData];
-        [self setState:task.state withError:error];
+    [self closeOutputStream];
+    if (error == nil && task.state == NSURLSessionTaskStateCompleted) {
+        [[NSFileManager defaultManager] removeItemAtPath:_finalFilePath error:nil];
+        [[NSFileManager defaultManager] moveItemAtPath:_cacheFilePath
+                                                toPath:_finalFilePath
+                                                 error:&error];
     }
+    [self setState:task.state withError:error];
 }
 
 #pragma mark <NSURLSessionDataDelegate>
@@ -288,7 +302,20 @@ didReceiveResponse:(NSURLResponse *)response
     BOOL append = NO;
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
         NSHTTPURLResponse *http = (NSHTTPURLResponse *)response;
-        append = http.statusCode == 206;
+        switch (http.statusCode) {
+            case 200: // OK
+                break;
+            case 206: // Partial Content
+                append = YES;
+                break;
+            default:
+            {
+                id userInfo = @{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"%ld %@", (long)http.statusCode, [NSHTTPURLResponse localizedStringForStatusCode:http.statusCode]]};
+                NSError *error = [NSError errorWithDomain:@"HTTPStatusCode" code:http.statusCode userInfo:userInfo];
+                [self setState:NSURLSessionTaskStateCompleted withError:error];
+                return;
+            }
+        }
     }
     //
     if (append) {
@@ -314,47 +341,6 @@ didReceiveResponse:(NSURLResponse *)response
     }
 }
 
-#pragma mark <NSURLSessionDownloadDelegate>
-
-/* Sent when a download task that has completed a download.  The delegate should
- * copy or move the file at the given location to a new location as it will be
- * removed when the delegate message returns. URLSession:task:didCompleteWithError: will
- * still be called.
- */
-- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask
-                              didFinishDownloadingToURL:(NSURL *)location
-{
-    NSError *error = nil;
-    NSURL *toURL = [NSURL fileURLWithPath:_finalFilePath];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    [fileManager removeItemAtURL:toURL error:NULL];
-    [fileManager copyItemAtURL:location toURL:toURL error:&error];
-    [self setState:downloadTask.state withError:error];
-}
-
-
-/* Sent periodically to notify the delegate of download progress. */
-- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask
-                                           didWriteData:(int64_t)bytesWritten
-                                      totalBytesWritten:(int64_t)totalBytesWritten
-                              totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
-{
-    [self setTotalBytesWritten:totalBytesWritten totalBytesExpectedToWrite:totalBytesExpectedToWrite];
-    //NSLog(@"didWriteData:%lld/%lld/%lld", bytesWritten, totalBytesWritten, totalBytesExpectedToWrite);
-}
-
-/* Sent when a download has been resumed. If a download failed with an
- * error, the -userInfo dictionary of the error will contain an
- * NSURLSessionDownloadTaskResumeData key, whose value is the resume
- * data.
- */
-- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask
-                                      didResumeAtOffset:(int64_t)fileOffset
-                                     expectedTotalBytes:(int64_t)expectedTotalBytes
-{
-    //NSLog(@"didResume:%lld/%lld", fileOffset, expectedTotalBytes);
-}
-
 @end
 
 @implementation NSURL (ZXDownloadTask)
@@ -371,10 +357,10 @@ didReceiveResponse:(NSURLResponse *)response
         [url appendFormat:@":%d", self.port.intValue];
     }
     if (self.path) {
-        [url appendFormat:@"/%@", self.path];
+        [url appendFormat:@"%@", self.path];
     }
     if (url.length) {
-        return [[[ZXCommonDigest alloc] initWithString:url] SHA1String];
+        return [[[[ZXCommonDigest alloc] initWithString:url] SHA1String] lowercaseString];
     }
     return nil;
 }

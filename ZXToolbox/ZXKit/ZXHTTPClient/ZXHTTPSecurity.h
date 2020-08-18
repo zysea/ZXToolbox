@@ -2,7 +2,7 @@
 // ZXHTTPSecurity.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Reference AFSecurityPolicy in AFNetworking
 // https://github.com/AFNetworking/AFNetworking
@@ -28,6 +28,8 @@
 
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
+
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  ZXHTTPSecurity
@@ -71,3 +73,4 @@
 
 @end
 
+NS_ASSUME_NONNULL_END

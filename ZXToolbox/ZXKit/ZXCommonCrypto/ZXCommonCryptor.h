@@ -2,7 +2,7 @@
 // ZXCommonCryptor.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,26 +24,32 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CommonCrypto/CommonCryptor.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
+/// Symmetric encryption
 @protocol ZXCommonCryptor <NSObject>
 
-/**
- Encrypt with algorithm for key
+/// Create an encrypted NSData from an NSData or UTF-8 encoded NSString using the given options.
+/// @param algorithm CCAlgorithm, kCCAlgorithmAES etc.
+/// @param mode Cipher Modes
+/// @param padding Padding for Block Ciphers
+/// @param key raw Key material
+/// @param iv  Initialization vector
+/// @param error Error of encryption
+/// @return Encrypted data if no error.
+- (NSData *)encryptedDataUsingAlgorithm:(CCAlgorithm)algorithm mode:(CCMode)mode padding:(CCPadding)padding key:(id)key iv:(id _Nullable)iv error:(NSError **_Nullable)error;
 
- @param algorithm CCAlgorithm in CommonCryptor
- @param key encrypt key
- @return encrypted data
- */
-- (NSData *)encryptedDataUsingCCAlgorithm:(uint32_t)algorithm key:(id)key;
-
-/**
- Decrypt with algorithm for key
-
- @param algorithm CCAlgorithm in CommonCryptor
- @param key encrypt key
- @return decrypted data
- */
-- (NSData *)decryptedDataUsingCCAlgorithm:(uint32_t)algorithm key:(id)key;
+/// Create a decrypted NSData from an NSData or UTF-8 encoded NSString using the given options.
+/// @param algorithm Encryption algorithms implemented by this module.
+/// @param mode Cipher Modes
+/// @param padding Padding for Block Ciphers
+/// @param key Raw key material
+/// @param iv  Initialization vector
+/// @param error Error of decryption
+/// @return Decrypted data if no error.
+- (NSData *)decryptedDataUsingAlgorithm:(CCAlgorithm)algorithm mode:(CCMode)mode padding:(CCPadding)padding key:(id)key iv:(id _Nullable)iv error:(NSError **_Nullable)error;
 
 @end
 
@@ -54,3 +60,5 @@
 @interface NSString (ZXCommonCryptor) <ZXCommonCryptor>
 
 @end
+
+NS_ASSUME_NONNULL_END

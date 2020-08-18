@@ -2,7 +2,7 @@
 // NSString+URLEncoding.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,39 +25,30 @@
 
 #import <Foundation/Foundation.h>
 
-/**
- Encoding string
+/// NSURL Encoding Component
+typedef NS_ENUM(NSInteger, NSStringURLEncoding) {
+    /// NSCharacterSet.URLUserAllowedCharacterSet
+    NSStringURLEncodingUser,
+    /// NSCharacterSet.URLPasswordAllowedCharacterSet
+    NSStringURLEncodingPassword,
+    /// NSCharacterSet.URLHostAllowedCharacterSet
+    NSStringURLEncodingHost,
+    /// NSCharacterSet.URLPathAllowedCharacterSet
+    NSStringURLEncodingPath,
+    /// NSCharacterSet.URLQueryAllowedCharacterSet
+    NSStringURLEncodingQuery,
+    /// NSCharacterSet.URLFragmentAllowedCharacterSet
+    NSStringURLEncodingFragment,
+};
 
- @param string Original string
- @return Encoded NSString
- */
-extern NSString * NSStringWithURLEncoding(NSString *string);
-
-/**
- Decoding string
-
- @param string Encoded string
- @return Decoded string
- */
-extern NSString * NSStringWithURLDecoding(NSString *string);
-
-/**
- NSString (URLEncoding)
- */
+/// NSString (URLEncoding)
 @interface NSString (URLEncoding)
 
-/**
- Encoding string
+/// URL Encoding
+/// @param component Encoding component
+- (NSString *)stringByURLEncoding:(NSStringURLEncoding)component;
 
- @return Encoded NSString
- */
-- (NSString *)stringByURLEncoding;
-
-/**
- Decoding string
-
- @return Decoded NSString
- */
+/// URL Decoding
 - (NSString *)stringByURLDecoding;
 
 @end

@@ -2,7 +2,7 @@
 // ZXToolbox.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,8 @@ FOUNDATION_EXPORT const unsigned char ZXToolboxVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <ZXToolbox/PublicHeader.h>
 
+#import "AVAsset+ZXToolbox.h"
+#import "AVAudioSession+ZXToolbox.h"
 #import "JSONObject.h"
 #import "NSArray+ZXToolbox.h"
 #import "NSData+Base64Encoding.h"
@@ -46,7 +48,6 @@ FOUNDATION_EXPORT const unsigned char ZXToolboxVersionString[];
 #import "NSString+Unicode.h"
 #import "NSString+URLEncoding.h"
 #import "UIApplication+ZXToolbox.h"
-#import "UIApplicationIdleTimer.h"
 #import "UIButton+ZXToolbox.h"
 #import "UIColor+ZXToolbox.h"
 #import "UIControl+ZXToolbox.h"
@@ -54,25 +55,25 @@ FOUNDATION_EXPORT const unsigned char ZXToolboxVersionString[];
 #import "UIImage+ZXToolbox.h"
 #import "UINavigationBar+ZXToolbox.h"
 #import "UINavigationController+ZXToolbox.h"
-#import "UINetworkActivityIndicator.h"
 #import "UIScreen+ZXToolbox.h"
 #import "UIScrollView+ZXToolbox.h"
 #import "UITableViewCell+ZXToolbox.h"
 #import "UITextField+ZXToolbox.h"
 #import "UIView+ZXToolbox.h"
 #import "UIViewController+ZXToolbox.h"
-#import "ZXAlertView.h"
-#import "ZXAudioDevice.h"
 #import "ZXAuthorizationHelper.h"
 #import "ZXBadgeLabel.h"
 #import "ZXBrightnessView.h"
 #import "ZXCircularProgressView.h"
 #import "ZXCommonCrypto.h"
+#import "ZXCoordinate2D.h"
 #import "ZXDownloader.h"
 #import "ZXDrawingView.h"
 #import "ZXHaloLabel.h"
 #import "ZXHTTPClient.h"
 #import "ZXImageBroswer.h"
+#import "ZXKeychain.h"
+#import "ZXKVObserver.h"
 #import "ZXLineChartView.h"
 #import "ZXLocalAuthentication.h"
 #import "ZXLocationManager.h"
@@ -89,7 +90,6 @@ FOUNDATION_EXPORT const unsigned char ZXToolboxVersionString[];
 #import "ZXQRCodeReader.h"
 #import "ZXQRCodeScanner.h"
 #import "ZXScriptMessageHandler.h"
-#import "ZXScrollLabel.h"
 #import "ZXStackView.h"
 #import "ZXTabBar.h"
 #import "ZXTabBarController.h"

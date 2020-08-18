@@ -2,7 +2,7 @@
 // ZXNetworkTrafficMonitor.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,14 +29,6 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 #include <net/if_dl.h>
-
-@interface ZXNetworkTrafficData : NSObject
-@property (nonatomic, assign) int64_t WiFiSent;
-@property (nonatomic, assign) int64_t WiFiReceived;
-@property (nonatomic, assign) int64_t WWANSent;
-@property (nonatomic, assign) int64_t WWANReceived;
-
-@end
 
 @implementation ZXNetworkTrafficData
 
@@ -79,62 +71,12 @@
 
 @implementation ZXNetworkTrafficMonitor
 
-- (void)startMonitoring:(NSTimeInterval)timeInterval
-                traffic:(void(^)(ZXNetworkTrafficModel *WiFiSent, ZXNetworkTrafficModel *WiFiReceived, ZXNetworkTrafficModel *WWANSent, ZXNetworkTrafficModel *WWANReceived))trafficBlock {
-    if (!self.isMonitoring) {
-        _trafficBlock = [trafficBlock copy];
-        _trafficTimes = 0;
-        //
-        _WiFiSent = [[ZXNetworkTrafficModel alloc] init];
-        _WiFiReceived = [[ZXNetworkTrafficModel alloc] init];
-        _WWANSent = [[ZXNetworkTrafficModel alloc] init];
-        _WWANReceived = [[ZXNetworkTrafficModel alloc] init];
-        //
-        self.trafficTimer = [NSTimer timerWithTimeInterval:timeInterval target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
-        [[NSRunLoop currentRunLoop] addTimer:self.trafficTimer forMode:NSRunLoopCommonModes];
-        [self.trafficTimer fire];
-    }
-}
-
 - (BOOL)isMonitoring {
     return [self.trafficTimer isValid];
 }
 
-- (void)stopMonitoring {
-    if ([self.trafficTimer isValid]) {
-        [self.trafficTimer invalidate];
-    }
-    self.trafficTimer = nil;
-    self.trafficBlock = nil;
-}
-
-- (void)onTimer:(id)sender {
-    ZXNetworkTrafficData *trafficData = [self getTrafficData];
-    //
-    if (_trafficTimes > 0) {
-        int64_t WiFiSent = trafficData.WiFiSent - _trafficData.WiFiSent;
-        int64_t WiFiReceived = trafficData.WiFiReceived - _trafficData.WiFiReceived;
-        int64_t WWANSent = trafficData.WWANSent - _trafficData.WWANSent;
-        int64_t WWANReceived = trafficData.WWANReceived - _trafficData.WWANReceived;
-        //
-        [self setTrafficModel:_WiFiSent forBytes:WiFiSent];
-        [self setTrafficModel:_WiFiReceived forBytes:WiFiReceived];
-        [self setTrafficModel:_WWANSent forBytes:WWANSent];
-        [self setTrafficModel:_WWANReceived forBytes:WWANReceived];
-        //
-        if (_trafficBlock) {
-            _trafficBlock(_WiFiSent, _WiFiReceived, _WWANSent, _WWANReceived);
-        }
-    }
-    //
-    self.trafficData = trafficData;
-    _trafficTimes++;
-}
-
-/**
- Reference http://stackoverflow.com/questions/7946699/iphone-data-usage-tracking-monitoring
- */
-- (ZXNetworkTrafficData *)getTrafficData {
+/// Reference http://stackoverflow.com/questions/7946699/iphone-data-usage-tracking-monitoring
+- (ZXNetworkTrafficData *)currentTrafficData {
     struct ifaddrs *addrs;
     const struct ifaddrs *cursor;
     //
@@ -183,6 +125,54 @@
     trafficData.WWANSent = WWANSent;
     trafficData.WWANReceived = WWANReceived;
     return trafficData;
+}
+
+- (void)startMonitoring:(NSTimeInterval)timeInterval
+                traffic:(void(^)(ZXNetworkTrafficModel *WiFiSent, ZXNetworkTrafficModel *WiFiReceived, ZXNetworkTrafficModel *WWANSent, ZXNetworkTrafficModel *WWANReceived))trafficBlock {
+    if (!self.isMonitoring) {
+        _trafficBlock = [trafficBlock copy];
+        _trafficTimes = 0;
+        //
+        _WiFiSent = [[ZXNetworkTrafficModel alloc] init];
+        _WiFiReceived = [[ZXNetworkTrafficModel alloc] init];
+        _WWANSent = [[ZXNetworkTrafficModel alloc] init];
+        _WWANReceived = [[ZXNetworkTrafficModel alloc] init];
+        //
+        self.trafficTimer = [NSTimer timerWithTimeInterval:timeInterval target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:self.trafficTimer forMode:NSRunLoopCommonModes];
+        [self.trafficTimer fire];
+    }
+}
+
+- (void)stopMonitoring {
+    if ([self.trafficTimer isValid]) {
+        [self.trafficTimer invalidate];
+    }
+    self.trafficTimer = nil;
+    self.trafficBlock = nil;
+}
+
+- (void)onTimer:(id)sender {
+    ZXNetworkTrafficData *trafficData = [self currentTrafficData];
+    //
+    if (_trafficTimes > 0) {
+        int64_t WiFiSent = trafficData.WiFiSent - _trafficData.WiFiSent;
+        int64_t WiFiReceived = trafficData.WiFiReceived - _trafficData.WiFiReceived;
+        int64_t WWANSent = trafficData.WWANSent - _trafficData.WWANSent;
+        int64_t WWANReceived = trafficData.WWANReceived - _trafficData.WWANReceived;
+        //
+        [self setTrafficModel:_WiFiSent forBytes:WiFiSent];
+        [self setTrafficModel:_WiFiReceived forBytes:WiFiReceived];
+        [self setTrafficModel:_WWANSent forBytes:WWANSent];
+        [self setTrafficModel:_WWANReceived forBytes:WWANReceived];
+        //
+        if (_trafficBlock) {
+            _trafficBlock(_WiFiSent, _WiFiReceived, _WWANSent, _WWANReceived);
+        }
+    }
+    //
+    self.trafficData = trafficData;
+    _trafficTimes++;
 }
 
 - (void)setTrafficModel:(ZXNetworkTrafficModel *)model forBytes:(int64_t)bytes {

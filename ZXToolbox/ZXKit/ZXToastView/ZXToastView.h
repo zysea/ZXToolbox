@@ -2,7 +2,7 @@
 // ZXToastView.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- ZXToastPosition
- */
+
+/// ZXToastViewStyle
+typedef NS_ENUM(NSInteger, ZXToastStyle) {
+    ZXToastStyleUnspecified,
+    ZXToastStyleLight,
+    ZXToastStyleDark,
+};
+
+/// ZXToastPosition
 typedef NS_ENUM(NSInteger, ZXToastPosition) {
     ZXToastPositionCenter,
     ZXToastPositionTop,
@@ -42,138 +48,89 @@ typedef NS_ENUM(NSInteger, ZXToastPosition) {
     ZXToastPositionBottomRight,
 };
 
-/**
- ZXToastView
- */
+/// ZXToastView
 @interface ZXToastView : UIView
 
-/**
- The bubble view
- */
+/// Preset style for toast view, default is ZXToastStyleUnspecified
+@property (nonatomic, readwrite) ZXToastStyle style;
+
+/// The bubble view
 @property (nonatomic, readonly) UIView *bubbleView;
 
-/**
- Blur effect style for bubbleView
- */
+/// Blur effect style for bubbleView
 @property (nonatomic, readwrite) UIBlurEffectStyle effectStyle NS_AVAILABLE_IOS(8_0);
 
-/**
- The activity view
- */
+/// The activity view
 @property (nonatomic, readonly, nullable) UIActivityIndicatorView *activityView;
 
-/**
- The text label
- */
+/// The text label
 @property (nonatomic, readonly, nullable) UILabel *textLabel;
 
-/**
- The image view
- */
+/// The image view
 @property (nonatomic, readonly, nullable) UIImageView *imageView;
 
-/**
- Toast content insets, default is {64.0, 44.0, 64.0, 44.0}
- */
+/// Toast safe area insets, default is {0, 0, 0, 0}
+@property (nonatomic, assign) UIEdgeInsets safeAreaInset;
+
+/// Toast content margin, default is {15, 15, 15, 20}
 @property (nonatomic, assign) UIEdgeInsets contentInset;
 
-/**
- Toast content margin, default is 20.0
- */
-@property (nonatomic, assign) CGFloat contentMargin;
+/// Toast content spacing, default is 8
+@property (nonatomic, assign) CGFloat contentSpacing;
 
-/**
- Toast content padding, default 8.0
- */
-@property (nonatomic, assign) CGFloat contentPadding;
+/// Toast corner radius, default is 10
+@property (nonatomic, assign) CGFloat cornerRadius;
 
-/**
- The toast duration, default is 3 sec.
- */
+/// The toast duration, default is 3 sec.
 @property (nonatomic, assign) NSTimeInterval duration;
 
-/**
- The fade in/out animation duration. Default is 0.2.
- */
+/// The fade in/out animation duration. Default is 0.2.
 @property (nonatomic, assign) NSTimeInterval fadeDuration;
 
-/**
- The toast position, default is ZXToastViewPositionCenter
- */
+/// The toast position, default is ZXToastViewPositionCenter
 @property (nonatomic, assign) ZXToastPosition position;
 
-/**
- Tap to dismiss on toast views, default is YES
- */
+/// Tap to dismiss on toast views, default is YES
 @property (nonatomic, assign) BOOL dismissWhenTouchInside;
 
-/**
- Capture all touchs when toast view presenting, default is YES
- */
+/// Capture all touchs when toast view presenting, default is YES
 @property (nonatomic, assign) BOOL captureWhenTouchOutside;
 
-/**
- Init toast activity view
-
- @param text The text to be displayed
- @return The instance
- */
+/// Init toast activity view
+/// @param text The text to be displayed
 - (instancetype)initWithActivity:(NSString * _Nullable)text;
 
-/**
- Creates a new toast view
-
- @param text The text to be displayed
- @return The instance
- */
+/// Creates a new toast view
+/// @param text The text to be displayed
 - (instancetype)initWithText:(NSString * _Nullable)text;
 
-/**
- Creates a new toast view
-
- @param text The text to be displayed
- @param duration The toast duration
- @return The instance
- */
+/// Creates a new toast view
+/// @param text The text to be displayed
+/// @param duration The toast duration
 - (instancetype)initWithText:(NSString * _Nullable)text
                     duration:(NSTimeInterval)duration;
 
-/**
- Creates a new toast view
-
- @param image The image
- @param text The text to be displayed
- @param duration The toast duration
- @return The instance
- */
+/// Creates a new toast view
+/// @param image The image
+/// @param text The text to be displayed
+/// @param duration The toast duration
 - (instancetype)initWithImage:(UIImage * _Nullable)image
                          text:(NSString * _Nullable)text
                      duration:(NSTimeInterval)duration;
 
-/**
- Show toast in view
+/// Show toast in view
+/// @param view The superview
+- (instancetype)showInView:(UIView *)view;
 
- @param view The superview
- */
-- (void)showInView:(UIView *)view;
-
-/**
- Show the status text
- 
- @param text The text to be displayed
- */
+/// Show the status text
+/// @param text The text to be displayed
 - (void)showStatus:(NSString * _Nullable)text;
 
-/**
- Hide the toast
-
- @param animated animated
- */
+/// Hide the toast
+/// @param animated animated
 - (void)hideAnimated:(BOOL)animated;
 
-/**
- Hide all toast
- */
+/// Hide all toast
 + (void)hideAllToast;
 
 @end

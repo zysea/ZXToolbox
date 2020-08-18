@@ -2,7 +2,7 @@
 // UIButton+ZXToolbox.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,9 +42,6 @@ typedef NS_ENUM(NSInteger, UIButtonTitleImageLayout) {
 
 /** Default is 0 */
 @property (nonatomic, assign) CGFloat titleImageSpacing;
-
-/** Layout the title and image */
-- (void)layoutTitleImage;
 
 @end
 

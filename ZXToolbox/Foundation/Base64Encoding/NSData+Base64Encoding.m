@@ -2,7 +2,7 @@
 // NSData+Base64Encoding.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,27 +27,16 @@
 
 @implementation NSData (Base64Encoding)
 
-+ (instancetype)dataWithBase64EncodedString:(NSString *)base64String options:(NSDataBase64DecodingOptions)options {
-    if (base64String) {
-        return [[NSData alloc] initWithBase64EncodedString:base64String options:options];
-    }
-    return nil;
+- (NSData *)base64DecodedDataWithOptions:(NSDataBase64DecodingOptions)options {
+    return [[NSData alloc] initWithBase64EncodedData:self options:options];
 }
 
 - (NSString *)base64DecodedStringWithOptions:(NSDataBase64DecodingOptions)options {
-    NSData *data = [self base64DecodedDataWithOptions:options];
+    NSData *data = [[NSData alloc] initWithBase64EncodedData:self options:options];
     if (data) {
         return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     }
     return nil;
-}
-
-+ (instancetype)dataWithBase64EncodedData:(NSData *)base64Data options:(NSDataBase64DecodingOptions)options {
-    return [base64Data base64DecodedDataWithOptions:options];
-}
-
-- (NSData *)base64DecodedDataWithOptions:(NSDataBase64DecodingOptions)options {
-    return [[NSData alloc] initWithBase64EncodedData:self options:options];
 }
 
 @end

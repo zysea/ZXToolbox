@@ -2,7 +2,7 @@
 // NSDate+ZXToolbox.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,11 @@
 #import <Foundation/Foundation.h>
 
 // yyyy-MM-dd HH:mm:ss
-extern NSString *const NSDateToolboxFormatDateTime;
+extern NSString *const kZXToolboxDateFormatDateTime;
 // yyyy-MM-dd
-extern NSString *const NSDateToolboxFormatDate;
+extern NSString *const kZXToolboxDateFormatDate;
 // HH:mm:ss
-extern NSString *const NSDateToolboxFormatTime;
+extern NSString *const kZXToolboxDateFormatTime;
 
 /// NSDate (ZXToolbox)
 @interface NSDate (ZXToolbox)

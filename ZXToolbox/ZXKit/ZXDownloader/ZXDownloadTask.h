@@ -2,7 +2,7 @@
 // ZXDownloadTask.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /// ZXDownloadTask
-@interface ZXDownloadTask : NSObject <NSURLSessionDataDelegate, NSURLSessionDownloadDelegate>
+@interface ZXDownloadTask : NSObject <NSURLSessionDataDelegate>
 
-/// The download task, it will be a NSURLSessionDataTask or NSURLSessionDownloadTask instance
-@property (nonatomic, strong) NSURLSessionTask *task;
+/// The unique identifier for task
+@property (nonatomic, readonly) NSURL *URL;
 
 /// The unique identifier for task
 @property (nonatomic, readonly) NSString *taskIdentifier;
@@ -39,8 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// The current state of the task—active, suspended, in the process of being canceled, or completed.
 @property (nonatomic, readonly) NSURLSessionTaskState state;
 
-/// The path for downloading/downloaded file
-@property (nonatomic, readonly, nullable) NSString *filePath;
+/// Location of the downloaded file
+@property (nonatomic, readonly) NSString *filePath;
 
 /// Total bytes written
 @property (nonatomic, readonly) int64_t totalBytesWritten;
@@ -51,14 +51,22 @@ NS_ASSUME_NONNULL_BEGIN
 /// Init
 /// @param URL The download URL
 /// @param path The local path of download
-- (instancetype)initWithURL:(NSURL *)URL path:(NSString *)path;
+/// @param session The URL session
+- (instancetype)initWithURL:(NSURL *)URL path:(NSString *)path session:(NSURLSession *)session;
+
+/// Init
+/// @param URL The download URL
+/// @param path The local path of download
+/// @param session The URL session
+/// @param resumeBroken Resume broken download or not
+- (instancetype)initWithURL:(NSURL *)URL path:(NSString *)path session:(NSURLSession *)session resumeBroken:(BOOL)resumeBroken;
 
 /// Add observer
 /// @param observer The observer
 /// @param state A block object to be executed when the download state changed.
 /// @param progress  A block object to be executed when the download progress changed.
 - (void)addObserver:(id)observer
-              state:(void(^_Nullable)(NSURLSessionTaskState state, NSString *_Nullable localFilePath, NSError *_Nullable error))state
+              state:(void(^_Nullable)(NSURLSessionTaskState state, NSString *_Nullable filePath, NSError *_Nullable error))state
            progress:(void(^_Nullable)(int64_t receivedSize, int64_t expectedSize, float progress))progress;
 
 /// Remove observer
@@ -71,7 +79,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// Suspend the task
 - (void)suspend;
 
-/// Resume the task
+/// Resume the task. If the destination file exists, will be issued by state observer a NSFileWriteFileExistsError error
 - (void)resume;
 
 @end

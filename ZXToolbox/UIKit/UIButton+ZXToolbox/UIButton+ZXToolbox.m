@@ -2,7 +2,7 @@
 // UIButton+ZXToolbox.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,7 @@
     [self swizzleMethod:@selector(setEnabled:) with:@selector(zx_setEnabled:)];
     [self swizzleMethod:@selector(setHighlighted:) with:@selector(zx_setHighlighted:)];
     [self swizzleMethod:@selector(setSelected:) with:@selector(zx_setSelected:)];
+    [self swizzleMethod:@selector(setBounds:) with:@selector(zx_setBounds:)];
 }
 
 - (void)zx_setTitle:(NSString *)title forState:(UIControlState)state {
@@ -59,6 +60,11 @@
 
 - (void)zx_setSelected:(BOOL)selected {
     [self zx_setSelected:selected];
+    [self layoutTitleImage];
+}
+
+- (void)zx_setBounds:(CGRect)rect {
+    [self zx_setBounds:rect];
     [self layoutTitleImage];
 }
 
@@ -95,8 +101,12 @@
     [self setImageEdgeInsets:UIEdgeInsetsZero];
     [self layoutIfNeeded];
     // frame
-    CGRect title = self.titleLabel.frame;
-    CGRect image = self.imageView.frame;
+    CGRect title = [self titleRectForContentRect:self.bounds];
+    // Fixed bugs in iOS <= 13
+    if (self.currentTitle.length > 0 && title.size.height <= 0) {
+        title.size.height = [self.titleLabel sizeThatFits:self.bounds.size].height;
+    }
+    CGRect image = [self imageRectForContentRect:self.bounds];
     CGFloat space = self.titleImageSpacing / 2;
     CGPoint point = CGPointZero;
     // layout

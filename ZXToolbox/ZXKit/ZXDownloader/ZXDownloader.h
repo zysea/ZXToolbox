@@ -2,7 +2,7 @@
 // ZXDownloader.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,20 +33,17 @@ NS_ASSUME_NONNULL_BEGIN
 /// The default instance of ZXDownloader
 + (instancetype)defaultDownloader;
 
-/// The background instacnce of ZXDownloader
-+ (instancetype)backgroundDownloader;
-
 /// Destination directory of download
 @property (nonatomic, copy) NSString *downloadPath;
 
-/// The maximum number of downloads that can execute at the same time, default is 0 which means no limit.
-@property (nonatomic, assign) NSInteger maxConcurrentDownloadCount;
+/// The maximum number of downloads that can execute at the same time, default is 4/6 in iOS/OSX
+@property (nonatomic, readonly) NSInteger maxConcurrentDownloadCount;
 
 /// The current number of concurrent downloads
 @property (nonatomic, readonly) NSInteger currentConcurrentDownloadCount;
 
-/// Auto resume next download task when maxConcurrentDownloadCount > 0, default is false
-@property (nonatomic, assign) BOOL autoResumeNextDownloadTask;
+/// Resume broken download enabled or not, default is YES
+@property (nonatomic, assign) BOOL resumeBrokenEnabled;
 
 /// Enable to allow untrusted SSL certificates, default YES.
 @property (nonatomic, assign) BOOL allowInvalidCertificates;
@@ -54,21 +51,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// The credential that should be used for authentication.
 @property (nonatomic, strong, nullable) NSURLCredential * credential;
 
-/// If have download tasks in background, please set this block in
-/// [UIApplicationDelegate.application:handleEventsForBackgroundURLSession:completionHandler:]
-@property (nonatomic, copy) void (^backgroundCompletionHandler)(void);
+/// Got download task for URL
+/// @param URL The URL
+- (nullable ZXDownloadTask *)downloadTaskForURL:(NSURL *)URL;
 
 /// Create or got exist download task with URL
 /// @param URL The URL
-- (ZXDownloadTask *)downloadTaskWithURL:(NSURL *)URL;
-
-/// Get download task for URL
-/// @param URL The URL
-- (ZXDownloadTask *)downloadTaskForURL:(NSURL *)URL;
-
-/// Suspend the task for URL
-/// @param URL The URL
-- (void)suspendTaskForURL:(NSURL *)URL;
+- (nullable ZXDownloadTask *)downloadTaskWithURL:(NSURL *)URL;
 
 /// Suspend the task
 /// @param task task The task
@@ -77,20 +66,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// Suspend all tasks
 - (void)suspendAllTasks;
 
-/// Resume or start the task for URL
-/// @param URL The URL
-- (void)resumeTaskForURL:(NSURL *)URL;
-
 /// Start/Resume the task
 /// @param task The task
-- (BOOL)resumeTask:(ZXDownloadTask *)task;
+- (void)resumeTask:(ZXDownloadTask *)task;
 
 /// Resume or start all tasks
 - (void)resumeAllTasks;
-
-/// Cancel the task for URL
-/// @param URL The URL
-- (void)cancelTaskForURL:(NSURL *)URL;
 
 /// Cancel the task
 /// @param task The task

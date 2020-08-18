@@ -2,7 +2,7 @@
 // ZXPhotoLibrary.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 //
 
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <AVFoundation/AVFoundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <ImageIO/ImageIO.h>
 #import <Photos/Photos.h>
@@ -31,18 +32,6 @@
 
 @class ZXPhotoGroup;
 @class ZXPhotoAsset;
-
-/**
- ZXAuthorizationStatus
- */
-typedef NS_ENUM(NSInteger, ZXAuthorizationStatus) {
-    ZXAuthorizationStatusNotDetermined = 0, // User has not yet made a choice with regards to this application
-    ZXAuthorizationStatusRestricted,        // This application is not authorized to access photo data.
-                                            // The user cannot change this application’s status, possibly due to active restrictions
-                                            //   such as parental controls being in place.
-    ZXAuthorizationStatusDenied,            // User has explicitly denied this application access to photos data.
-    ZXAuthorizationStatusAuthorized         // User has authorized this application to access photos data.
-} NS_AVAILABLE_IOS(7_0);
 
 /**
  ZXAssetMediaType
@@ -72,18 +61,18 @@ typedef NS_ENUM(NSInteger, ZXAssetMediaType) {
 @interface ZXPhotoLibrary : NSObject
 
 /**
- The default instance
+ The shared instance
 
  @return ZXPhotoLibrary
  */
-+ (ZXPhotoLibrary *)defaultLibrary;
++ (ZXPhotoLibrary *)sharedPhotoLibrary;
 
 /**
  Request authorization
 
  @param completion response block
  */
-- (void)requestAuthorization:(void(^)(ZXAuthorizationStatus status))completion;
++ (void)requestAuthorization:(void(^)(AVAuthorizationStatus status))completion;
 
 /**
  Get photo groups
@@ -102,12 +91,20 @@ typedef NS_ENUM(NSInteger, ZXAssetMediaType) {
 - (void)fetchAssetsWithAscending:(BOOL)ascending completion:(void(^)(NSArray<ZXPhotoAsset *> *results))completion;
 
 /**
- Save image to photo album
+ Adds the specified image to the user’s Camera Roll album.
 
  @param image the UIImage
  @param completion result block
  */
-- (void)saveImage:(UIImage *)image toPhotoAlbum:(void(^)(NSError *error))completion;
+- (void)saveImage:(UIImage *)image toSavedPhotoAlbum:(void(^)(NSError *error))completion;
+
+/**
+Adds the movie at the specified path to the user’s Camera Roll album.
+
+@param fileURL the video file at the specified URL.
+@param completion result block
+*/
+- (void)saveVideo:(NSURL *)fileURL toSavedPhotoAlbum:(void(^)(NSError *error))completion;
 
 /**
  Register change observer, use unregisterChangeObserver: to unregister

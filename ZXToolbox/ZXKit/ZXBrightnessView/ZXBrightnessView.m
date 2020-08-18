@@ -2,7 +2,7 @@
 // ZXBrightnessView.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,14 @@
 #import "ZXBrightnessView.h"
 #import "UIColor+ZXToolbox.h"
 #import "ZXToolbox+Macros.h"
+#import "ZXKVObserver.h"
 
 @interface ZXBrightnessView ()
 @property (nonatomic, strong) UIView *levelView;
 @property (nonatomic, strong) NSTimer *disappearTimer;
 @property (nonatomic, assign) BOOL willDisappear;
+@property (nonatomic, weak) id applicationDidChangeStatusBarOrientationObserver;
+@property (nonatomic, strong) ZXKVObserver *mainScreenBrightnessObserver;
 
 @end
 
@@ -88,6 +91,8 @@
             imageView.tag = i;
             [self.levelView addSubview:imageView];
         }
+        //
+        _mainScreenBrightnessObserver = [[ZXKVObserver alloc] init];
     }
     return self;
 }
@@ -121,30 +126,25 @@
 #pragma mark Observer
 
 - (void)addObserver {
-    [[UIScreen mainScreen] addObserver:self
-                            forKeyPath:@"brightness"
-                               options:NSKeyValueObservingOptionNew context:NULL];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationDidChangeStatusBarOrientationNotification:) name:UIApplicationDidChangeStatusBarOrientationNotification
-                                               object:nil];
+    [self removeObserver];
+    //
+    __weak typeof(self) weakSelf = self;
+    _applicationDidChangeStatusBarOrientationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidChangeStatusBarOrientationNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+        [weakSelf setNeedsLayout];
+    }];
+    //
+    [_mainScreenBrightnessObserver addObserver:[UIScreen mainScreen] forKeyPath:@"brightness" options:NSKeyValueObservingOptionNew context:NULL observeValue:^(NSDictionary<NSKeyValueChangeKey,id> * _Nullable change) {
+        CGFloat level = [change[NSKeyValueChangeNewKey] floatValue];
+        [weakSelf presentViewAnimated];
+        [weakSelf updateBrightnessLevel:level];
+    }];
 }
 
 - (void)removeObserver {
-    [[UIScreen mainScreen] removeObserver:self forKeyPath:@"brightness"];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary *)change
-                       context:(void *)context {
-    CGFloat level = [change[@"new"] floatValue];
-    [self presentViewAnimated];
-    [self updateBrightnessLevel:level];
-}
-
-- (void)applicationDidChangeStatusBarOrientationNotification:(id)sender {
-    [self setNeedsLayout];
+    if (_applicationDidChangeStatusBarOrientationObserver) {
+        [[NSNotificationCenter defaultCenter] removeObserver:_applicationDidChangeStatusBarOrientationObserver];
+    }
+    [_mainScreenBrightnessObserver removeObserver];
 }
 
 #pragma mark Present

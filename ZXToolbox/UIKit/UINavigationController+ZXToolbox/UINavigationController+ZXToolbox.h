@@ -2,7 +2,7 @@
 // UINavigationController+ZXToolbox.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// The root viewController
 @property(nonatomic, readonly, nullable) UIViewController *rootViewController;
+
+/// Pops view controllers until the specified class of view controller is at the top of the navigation stack.
+/// @param aClass The view controller class that you want to be at the top of the stack.
+/// @param animated Set this value to YES to animate the transition. Pass NO if you are setting up a navigation controller before its view is displayed.
+- (nullable NSArray<__kindof UIViewController *> *)popToViewControllerForClass:(Class)aClass animated:(BOOL)animated;
+
+/// Get first view controller for specified class in the navigation stack.
+/// @param aClass The view controller class that you want to be remove of the stack.
+- (nullable __kindof UIViewController *)firstViewControllerForClass:(Class)aClass;
+
+/// Get last view controller for specified class in the navigation stack.
+/// @param aClass The view controller class that you want to be remove of the stack.
+- (nullable __kindof UIViewController *)lastViewControllerForClass:(Class)aClass;
 
 @end
 

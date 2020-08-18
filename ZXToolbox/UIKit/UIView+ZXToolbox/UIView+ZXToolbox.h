@@ -2,7 +2,7 @@
 // UIView+ZXToolbox.h
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,8 +29,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface UIView (ZXToolbox)
 
-// Same as intrinsicContentSize, default is UILayoutFittingCompressedSize
-@property (nonatomic, assign) IBInspectable CGSize internalContentSize;
+/// Same as intrinsicContentSize, default is UILayoutFittingCompressedSize
+/// Deprecated, may be cause slow down system performance
+//@property (nonatomic, assign) IBInspectable CGSize inherentContentSize;
 
 /**
  Capture the view snapshot image

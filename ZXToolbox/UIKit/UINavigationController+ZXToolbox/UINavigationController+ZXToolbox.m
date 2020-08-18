@@ -2,7 +2,7 @@
 // UINavigationController+ZXToolbox.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,11 @@
 
 - (nullable UIViewController *)prevViewController {
     if (self.topViewController) {
-        NSInteger index = [self.viewControllers indexOfObject:self.topViewController] - 1;
-        if (index >= 0) {
-            return self.viewControllers[index];
+        NSInteger index = [self.viewControllers indexOfObject:self.topViewController];
+        if (index != NSNotFound && index > 0) {
+            if (--index >= 0 && index < self.viewControllers.count) {
+                return self.viewControllers[index];
+            }
         }
     }
     return nil;
@@ -39,6 +41,33 @@
 
 - (nullable UIViewController *)rootViewController {
     return [self.viewControllers firstObject];
+}
+
+- (NSArray<UIViewController *> *)popToViewControllerForClass:(Class)aClass animated:(BOOL)animated {
+    UIViewController *vc = [self lastViewControllerForClass:aClass];
+    if (vc) {
+        return [self popToViewController:vc animated:animated];
+    }
+    return nil;
+}
+
+- (nullable __kindof UIViewController *)firstViewControllerForClass:(Class)aClass {
+    for (UIViewController *vc in self.viewControllers) {
+        if (vc.class == aClass) {
+            return vc;
+        }
+    }
+    return nil;
+}
+
+- (nullable __kindof UIViewController *)lastViewControllerForClass:(Class)aClass {
+    for (NSInteger i = self.viewControllers.count - 1; i >= 0; --i) {
+        UIViewController *vc = self.viewControllers[i];
+        if (vc.class == aClass) {
+            return vc;
+        }
+    }
+    return nil;
 }
 
 @end

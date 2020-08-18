@@ -2,7 +2,7 @@
 // NSString+URLEncoding.m
 // https://github.com/xinyzhao/ZXToolbox
 //
-// Copyright (c) 2019 Zhao Xin
+// Copyright (c) 2019-2020 Zhao Xin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,22 +25,40 @@
 
 #import "NSString+URLEncoding.h"
 
-NSString * NSStringWithURLEncoding(NSString *string) {
-    return [string stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
-}
+@implementation NSString (URLEncoding)
 
-NSString * NSStringWithURLDecoding(NSString *string) {
-    return [string stringByRemovingPercentEncoding];
-}
-
-@implementation NSString (URLEncode)
-
-- (NSString *)stringByURLEncoding {
-    return NSStringWithURLEncoding(self);
+- (NSString *)stringByURLEncoding:(NSStringURLEncoding)component {
+    NSCharacterSet *set = nil;
+    switch (component) {
+        case NSStringURLEncodingUser:
+            set = NSCharacterSet.URLUserAllowedCharacterSet;
+            break;
+        case NSStringURLEncodingPassword:
+            set = NSCharacterSet.URLPasswordAllowedCharacterSet;
+            break;
+        case NSStringURLEncodingHost:
+            set = NSCharacterSet.URLHostAllowedCharacterSet;
+            break;
+        case NSStringURLEncodingPath:
+            set = NSCharacterSet.URLPathAllowedCharacterSet;
+            break;
+        case NSStringURLEncodingQuery:
+            set = NSCharacterSet.URLQueryAllowedCharacterSet;
+            break;
+        case NSStringURLEncodingFragment:
+            set = NSCharacterSet.URLFragmentAllowedCharacterSet;
+            break;
+        default:
+            break;
+    }
+    if (set) {
+        return [self stringByAddingPercentEncodingWithAllowedCharacters:set];
+    }
+    return nil;
 }
 
 - (NSString *)stringByURLDecoding {
-    return NSStringWithURLDecoding(self);
+    return [self stringByRemovingPercentEncoding];
 }
 
 @end
