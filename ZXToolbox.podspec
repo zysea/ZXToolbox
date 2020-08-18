@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.license      = { :type => "MIT", :file => "LICENSE" }
   s.author             = { "xinyzhao" => "xinyzhao@qq.com" }
   s.platform     = :ios, "8.0"
-  s.source       = { :git => "https://github.com/xinyzhao/ZXToolbox.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/zysea/ZXToolbox.git", :tag => "#{s.version}" }
   s.requires_arc = true
 
   s.frameworks = "Foundation", "UIKit"
